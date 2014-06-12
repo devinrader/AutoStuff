@@ -1,0 +1,67 @@
+﻿@model AutoStuff.Models.OpenShiftsViewModel
+
+@{
+    ViewBag.Title = "AutoStuff - Open Shifts";
+}
+
+@section scripts {
+
+    <script type="text/javascript">
+        function onBegin() {
+            var id = $(this).attr('id');
+            $("span#" + id + ".shift-link").hide();
+            $("span#" + id + ".shift-sending").show();
+        }
+
+        function onSuccess(result) {
+            $("span#shift" + result.shiftid + ".shift-sending").hide();
+            $("span#shift" + result.shiftid + ".shift-sent").show();
+            $("span#shift" + result.shiftid + ".shift-sent > #sentMessageCountLabel").text(result.messagesSentCount);
+        }
+
+    </script>
+
+}
+<div class="container">
+
+    <h2>Current Open Shifts</h2>
+
+    @if (Model.GroupedOpenShifts.Count > 0)
+    {
+        foreach (var group in Model.GroupedOpenShifts)
+        {
+            <h4>@group.StartDate.ToShortDateString()</h4>
+
+            <div>
+                <table class="table" style="width:500px">
+                    <thead>
+                        <tr>
+                            <th class="col-md-2">Shift Time</th>
+                            <th class="col-md-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+            foreach (var shift in group.Shifts)
+            {
+                <tr>
+                    <td>@shift.StartTime.ToShortTimeString() - @shift.EndTime.ToShortTimeString()</td>
+                    <td>
+                        <span id="shift@(shift.ID)" class="shift-link">@Ajax.ActionLink("Send Shift Fill Request", "SendShiftFillAlert", new { shiftID = shift.ID }, new AjaxOptions() { Confirm = "Do you want to sent a shift fill request SMS message to all opt-in employees?", HttpMethod = "POST", OnBegin = "onBegin", OnSuccess = "onSuccess" }, new { id = "shift"+shift.ID })</span>
+                        <span id="shift@(shift.ID)" class="shift-sending" style="display:none;">Sending Messages...</span>
+                        <span id="shift@(shift.ID)" class="shift-sent" style="display:none;"><span id="sentMessageCountLabel"></span> <span>Messages Sent</span></span>
+                    </td>
+                </tr>
+            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else
+    {
+        <div>There are no open shifts today.  Congratulations!</div>
+    }
+
+</div>
